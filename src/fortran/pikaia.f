@@ -34,6 +34,7 @@ c     Print the results
 c
       goto 1
       end
+
 c*********************************************************************
       function twod(n,x)
 c=====================================================================
@@ -410,7 +411,10 @@ c                      replacement/Steady-state-replace-random/Steady-
 c                      state-replace-worst (default is 3)
 c           ctrl(11) - elitism flag; 0/1=off/on (default is 0)
 c                      (Applies only to reproduction plans 1 and 2)
-c           ctrl(12) - printed output 0/1/2=None/Minimal/Verbose
+c           ctrl(12) - output 0/1/2=None/stdout summary/stdout summary + 3 files: 
+c                      "pikaia_best.txt"
+c                      "pikaia_mean.txt" 
+c                      "pikaia_worst.txt"
 c                      (default is 0)
 c
 c
@@ -450,6 +454,7 @@ c
       integer        gn1(NMAX*DMAX), gn2(NMAX*DMAX)
       integer        ifit(PMAX), jfit(PMAX)
       real           fitns(PMAX)
+
 c
 c     User-supplied uniform random number generator
       real           urand
@@ -472,6 +477,10 @@ cf2py intent(in) ff, n, ctrl
 cf2py intent(out) x, f, status
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
+c     For file output. Create format string w.r.t. `n` -- the number of
+c     dimensions.
+      character(len=100) rowfmt
+      write(rowfmt, *) '(I10, E30.16, ', n, '(1X, E30.16))'
 
 c
 c     Set control variables from input and defaults
@@ -483,6 +492,22 @@ c     Set control variables from input and defaults
          return
       endif
  
+c     Header for convergence prints
+      if (ivrb.gt.0) then 
+         write(*,*) ""
+         write(*,*) "iter best mean worst pmut nnew"
+      end if
+      
+c     File output if ivrb=2
+      if (ivrb.gt.1) then 
+         open(unit=25, file='pikaia_best.txt', status='unknown', 
+     +        action='write')
+         open(unit=26, file='pikaia_mean.txt', status='unknown', 
+     +        action='write')
+         open(unit=27, file='pikaia_worst.txt', status='unknown', 
+     +        action='write')
+      end if
+
 c     Make sure locally-dimensioned arrays are big enough
       if (n.gt.NMAX .or. np.gt.PMAX .or. nd.gt.DMAX) then
          write(*,*)
@@ -548,12 +573,37 @@ c        adjust mutation rate?
          if (imut.eq.2 .or. imut.eq.3 .or. imut.eq.5 .or. imut.eq.6)
      +      call adjmut(NMAX,n,np,oldph,fitns,ifit,pmutmn,pmutmx,
      +                  pmut,imut)
-c
-         if (ivrb.gt.0) call report
-     +      (ivrb,NMAX,n,np,nd,oldph,fitns,ifit,pmut,ig,newtot)
- 
+
+c        Don't call report b/c it's output is really unreadable if `n`
+c        is big. Instead, only write generation number and fitness of
+c        the best, mean and worst individuals. 
+         if (ivrb.gt.0) then 
+            write(*,'(I10, 4(F15.6), I5)') 
+     +       ig, fitns(ifit(np)), fitns(ifit(np/2)), fitns(ifit(1)),
+     +       pmut, newtot
+         end if
+
+c        Write files for monitoring:
+c         * generation  
+c         * fitness  
+c         * indiviual vector (decoded, e.g. the float values in [0,1])
+         if (ivrb.gt.1) then 
+             write(25,fmt=rowfmt) ig, fitns(ifit(np)), 
+     +                            oldph(1:n,ifit(np))
+             write(26,fmt=rowfmt) ig, fitns(ifit(np/2)), 
+     +                            oldph(1:n,ifit(np/2))
+             write(27,fmt=rowfmt) ig, fitns(ifit(1)),  
+     +                            oldph(1:n,ifit(1))
+         end if
+
 c     End of Main Generation Loop
    10 continue
+      
+      if (ivrb.gt.1) then 
+          close(25)
+          close(26)
+          close(27)
+      end if
 c
 c     Return best phenotype and its fitness
       do 30 k=1,n
@@ -741,8 +791,8 @@ c        Power of 10 to make integer genotypes for display
      +         nint(ndpwr*oldph(k,ifit(np-1))),
      +         nint(ndpwr*oldph(k,ifit(np/2)))
    15    continue
- 
       endif
+      
       end
 
 c**********************************************************************
@@ -1321,4 +1371,4 @@ c     compute new population fitness rank order
  
       return
       end
- 
+c vim:comments+=\:c
