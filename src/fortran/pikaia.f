@@ -411,10 +411,11 @@ c                      replacement/Steady-state-replace-random/Steady-
 c                      state-replace-worst (default is 3)
 c           ctrl(11) - elitism flag; 0/1=off/on (default is 0)
 c                      (Applies only to reproduction plans 1 and 2)
-c           ctrl(12) - output 0/1/2=None/stdout summary/stdout summary + 3 files: 
-c                      "pikaia_best.txt"
-c                      "pikaia_mean.txt" 
-c                      "pikaia_worst.txt"
+c           ctrl(12) - output 0/1/2=None/stdout summary/stdout summary + 4 files:
+c                        pikaia_ind_best.txt
+c                        pikaia_ind_mean.txt 
+c                        pikaia_ind_worst.txt
+c                        pikaia_fit.txt
 c                      (default is 0)
 c
 c
@@ -477,10 +478,16 @@ cf2py intent(in) ff, n, ctrl
 cf2py intent(out) x, f, status
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
-c     For file output. Create format string w.r.t. `n` -- the number of
-c     dimensions.
-      character(len=100) rowfmt
-      write(rowfmt, *) '(I10, E30.16, ', n, '(1X, E30.16))'
+c     For file output. Create format string rowfmt_ind w.r.t. `n` -- the
+c     number of dimensions for pikaia_ind_*.txt files and rowfmt_fit for
+c     pikaia_fitness.txt
+      character(len=100) rowfmt_ind
+      character(len=100) rowfmt_fit
+      character(len=50) header_fit, header_ind
+      parameter (header_fit="# iter best mean worst pmut nnew" ,
+     +           header_ind="# iter gene(1) .. gene(n)") 
+      write(rowfmt_ind, *) '(I10, ', n, '(1X, E23.16))'
+      write(rowfmt_fit, *) '(I10, ', 4, '(1X, E23.16), I10)'
 
 c
 c     Set control variables from input and defaults
@@ -495,17 +502,23 @@ c     Set control variables from input and defaults
 c     Header for convergence prints
       if (ivrb.gt.0) then 
          write(*,*) ""
-         write(*,*) "iter best mean worst pmut nnew"
+         write(*,*) header_fit
       end if
       
 c     File output if ivrb=2
       if (ivrb.gt.1) then 
-         open(unit=25, file='pikaia_best.txt', status='unknown', 
+         open(unit=25, file='pikaia_ind_best.txt', status='unknown', 
      +        action='write')
-         open(unit=26, file='pikaia_mean.txt', status='unknown', 
+         open(unit=26, file='pikaia_ind_mean.txt', status='unknown', 
      +        action='write')
-         open(unit=27, file='pikaia_worst.txt', status='unknown', 
+         open(unit=27, file='pikaia_ind_worst.txt', status='unknown', 
      +        action='write')
+         open(unit=28, file='pikaia_fit.txt', status='unknown', 
+     +        action='write')
+         write(25,*) header_ind
+         write(26,*) header_ind
+         write(27,*) header_ind
+         write(28,*) header_fit
       end if
 
 c     Make sure locally-dimensioned arrays are big enough
@@ -574,9 +587,9 @@ c        adjust mutation rate?
      +      call adjmut(NMAX,n,np,oldph,fitns,ifit,pmutmn,pmutmx,
      +                  pmut,imut)
 
-c        Don't call report b/c it's output is really unreadable if `n`
-c        is big. Instead, only write generation number and fitness of
-c        the best, mean and worst individuals. 
+c        Don't call the "report" subroutine b/c it's output is really
+c        unreadable if `n` is big. Instead, only write generation number
+c        and fitness of the best, mean and worst individuals. 
          if (ivrb.gt.0) then 
             write(*,'(I10, 4(F15.6), I5)') 
      +       ig, fitns(ifit(np)), fitns(ifit(np/2)), fitns(ifit(1)),
@@ -584,16 +597,24 @@ c        the best, mean and worst individuals.
          end if
 
 c        Write files for monitoring:
-c         * generation  
-c         * fitness  
-c         * indiviual vector (decoded, e.g. the float values in [0,1])
+c           * generation  
+c           * indiviual vector (decoded, e.g. the float values in [0,1])
+c        pikaia_fit.txt
+c           * generation
+c           * fitness best
+c           * fitness mean
+c           * fitness worst
+c           * pmut
+c           * nnew
          if (ivrb.gt.1) then 
-             write(25,fmt=rowfmt) ig, fitns(ifit(np)), 
-     +                            oldph(1:n,ifit(np))
-             write(26,fmt=rowfmt) ig, fitns(ifit(np/2)), 
-     +                            oldph(1:n,ifit(np/2))
-             write(27,fmt=rowfmt) ig, fitns(ifit(1)),  
-     +                            oldph(1:n,ifit(1))
+             write(25,fmt=rowfmt_ind) ig, oldph(1:n,ifit(np))
+             write(26,fmt=rowfmt_ind) ig, oldph(1:n,ifit(np/2))
+             write(27,fmt=rowfmt_ind) ig, oldph(1:n,ifit(1))
+             write(28,fmt=rowfmt_fit) ig, 
+     +                                fitns(ifit(np)), 
+     +                                fitns(ifit(np/2)), 
+     +                                fitns(ifit(1)),
+     +                                pmut, newtot  
          end if
 
 c     End of Main Generation Loop
@@ -603,6 +624,7 @@ c     End of Main Generation Loop
           close(25)
           close(26)
           close(27)
+          close(28)
       end if
 c
 c     Return best phenotype and its fitness

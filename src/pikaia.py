@@ -142,8 +142,11 @@ def pikaia (ff, n, ff_extra_args = (), \
     x, f, status = _pikaia.pikaia(ff, n, ctrl, ff_extra_args)
     return x
 
-def test():
-    x = pikaia(_pikaia.twod, 2)
+def test(**kwds):
+    """Call pikaia on buit-in 2d function "twod". Pass any keyword args besides
+    `ff` and `n` to the wrapper, e.g. `verbosity`, `generations`, ....
+    """
+    x = pikaia(ff=_pikaia.twod, n=2, **kwds)
     print "Solution for twod:"
     print x
 
