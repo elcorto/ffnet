@@ -478,16 +478,18 @@ cf2py intent(in) ff, n, ctrl
 cf2py intent(out) x, f, status
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
-c     For file output. Create format string rowfmt_ind w.r.t. `n` -- the
-c     number of dimensions for pikaia_ind_*.txt files and rowfmt_fit for
-c     pikaia_fitness.txt
-      character(len=100) rowfmt_ind
-      character(len=100) rowfmt_fit
-      character(len=50) header_fit, header_ind
-      parameter (header_fit="# iter best mean worst pmut nnew" ,
-     +           header_ind="# iter gene(1) .. gene(n)") 
-      write(rowfmt_ind, *) '(I10, ', n, '(1X, E23.16))'
-      write(rowfmt_fit, *) '(I10, ', 4, '(1X, E23.16), I10)'
+c     For file output. Create format string `rowfmt_ind` w.r.t. `n` --
+c     the number of dimensions for pikaia_ind_*.txt files and
+c     `rowfmt_fit` for pikaia_fit.txt. Also `rowfmt_ind_all` for
+c     pikaia_ind_all.txt.
+      character(len=100) rowfmt_ind, rowfmt_ind_all, rowfmt_fit,
+     +                   header_fit, header_ind, header_ind_all
+      parameter (header_fit=    "# iter best mean worst pmut nnew" ,
+     +           header_ind=    "# iter gene(1) .. gene(n)",
+     +           header_ind_all="# iter gene(i,1) .. gene(i,n)")
+      write(rowfmt_ind, *)     '(I10, ', n,    '(1X, E23.16))'
+      write(rowfmt_ind_all, *) '(I10, ', np*n, '(1X, E23.16))'
+      write(rowfmt_fit, *)     '(I10, ', 4,    '(1X, E23.16), I10)'
 
 c
 c     Set control variables from input and defaults
@@ -520,6 +522,14 @@ c     File output if ivrb=2
          write(27,*) header_ind
          write(28,*) header_fit
       end if
+
+c     File output if ivrb=3
+      if (ivrb.gt.2) then 
+         open(unit=29, file='pikaia_ind_all.txt', status='unknown', 
+     +        action='write')
+         write(29,*) header_ind_all
+      end if
+     
 
 c     Make sure locally-dimensioned arrays are big enough
       if (n.gt.NMAX .or. np.gt.PMAX .or. nd.gt.DMAX) then
@@ -596,9 +606,9 @@ c        and fitness of the best, mean and worst individuals.
      +       pmut, newtot
          end if
 
-c        Write files for monitoring:
+c        Write files for monitoring (pikaia_ind_{best,mean,worst}.txt
 c           * generation  
-c           * indiviual vector (decoded, e.g. the float values in [0,1])
+c           * individual vector (decoded, e.g. the float values in [0,1])
 c        pikaia_fit.txt
 c           * generation
 c           * fitness best
@@ -617,6 +627,16 @@ c           * nnew
      +                                pmut, newtot  
          end if
 
+c        pikaia_ind_all.txt
+c           * generation
+c           * individual vector 1, individual vector 2 ...
+c             -> all individuals in one line (number of columns = n*np = number of
+c             dimensions * number of individuals)
+         if (ivrb.gt.2) then 
+             write(29,fmt=rowfmt_ind_all) ig, 
+     +                                    oldph(1:n,1:np)
+         end if
+
 c     End of Main Generation Loop
    10 continue
       
@@ -625,6 +645,7 @@ c     End of Main Generation Loop
           close(26)
           close(27)
           close(28)
+          close(29)
       end if
 c
 c     Return best phenotype and its fitness
