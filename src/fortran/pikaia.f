@@ -411,13 +411,31 @@ c                      replacement/Steady-state-replace-random/Steady-
 c                      state-replace-worst (default is 3)
 c           ctrl(11) - elitism flag; 0/1=off/on (default is 0)
 c                      (Applies only to reproduction plans 1 and 2)
-c           ctrl(12) - output 0/1/2=None/stdout summary/stdout summary + 4 files:
-c                        pikaia_ind_best.txt
-c                        pikaia_ind_mean.txt 
-c                        pikaia_ind_worst.txt
-c                        pikaia_fit.txt
+c           ctrl(12) - output 0/1/2,3=None/stdout summary/stdout summary
+c                                     + some files:
+c                      ctrl(12) .ge. 2:               
+c                          pikaia_ind_{best,mean,worst}.txt
+c                              * generation  
+c                              * individual vector (decoded, e.g. the float
+c                                values in [0,1])
+c                          pikaia_fit.txt
+c                              * generation
+c                              * fitness best
+c                              * fitness mean
+c                              * fitness worst
+c                              * pmut (mutation rate)
+c                              * nnew (number of newly created individuals)
+c                      ctrl(12) .eq. 3:
+c                          pikaia_ind_all.txt
+c                              * generation
+c                              * individual vector 1, individual 
+c                                vector 2,...
+c                                -> all individuals in one line (number of
+c                                columns = number of
+c                                dimensions * number of individuals)
 c                      (default is 0)
-c
+
+
 c
 c     Output:
       real      x(n), f
@@ -606,16 +624,11 @@ c        and fitness of the best, mean and worst individuals.
      +       pmut, newtot
          end if
 
-c        Write files for monitoring (pikaia_ind_{best,mean,worst}.txt
-c           * generation  
-c           * individual vector (decoded, e.g. the float values in [0,1])
+c        Write files for monitoring:
+c        pikaia_ind_best.txt
+c        pikaia_ind_mean.txt
+c        pikaia_ind_worst.txt
 c        pikaia_fit.txt
-c           * generation
-c           * fitness best
-c           * fitness mean
-c           * fitness worst
-c           * pmut
-c           * nnew
          if (ivrb.gt.1) then 
              write(25,fmt=rowfmt_ind) ig, oldph(1:n,ifit(np))
              write(26,fmt=rowfmt_ind) ig, oldph(1:n,ifit(np/2))
@@ -628,10 +641,6 @@ c           * nnew
          end if
 
 c        pikaia_ind_all.txt
-c           * generation
-c           * individual vector 1, individual vector 2 ...
-c             -> all individuals in one line (number of columns = n*np = number of
-c             dimensions * number of individuals)
          if (ivrb.gt.2) then 
              write(29,fmt=rowfmt_ind_all) ig, 
      +                                    oldph(1:n,1:np)

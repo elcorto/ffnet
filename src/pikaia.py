@@ -106,8 +106,29 @@ def pikaia (ff, n, ff_extra_args = (), \
         elitism : {0, 1}
             Elitism flag; 0/1=off/on (default is 0)
             (Applies only to reproduction plans 1 and 2)
-        verbosity : {0, 1, 2}
-            Printed output 0/1/2=None/Minimal/Verbose (default is 0)
+        verbosity : {0, 1, 2, 3}
+            Printed output 0/1/2,3=None/Minimal/Verbose + monitoring files:
+                verbosity >= 2:
+                    pikaia_ind_{best,mean,worst}.txt
+                       * generation  
+                       * individual vector (decoded, e.g. the float values in
+                         [0,1])
+                    pikaia_fit.txt
+                       * generation
+                       * fitness best
+                       * fitness mean
+                       * fitness worst
+                       * pmut (mutation rate)
+                       * nnew (number of newly created individuals)
+                verbosity == 3:
+                    pikaia_ind_all.txt
+                       * generation
+                       * individual vector 1, individual vector 2, ...
+                         -> all individuals in one line (number of
+                         columns = number of
+                         dimensions * number of individuals)
+                    (See examples/pikaia.py for how to use this file.)           
+            (default is 0)
 
     :Returns:
         x : array (float32)
