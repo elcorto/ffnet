@@ -223,7 +223,7 @@ class TestFfnetSigmoid(unittest.TestCase):
                  (4, 6), (3, 6), (5, 6) ]
         net = ffnet(conec)
         y1n, y2n = net.derivative([1, 1])[0]
-        from scipy import derivative
+        from scipy.misc import derivative
         def func1(x):
             return net([x, 1])[0]
         def func2(x):
