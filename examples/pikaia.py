@@ -15,6 +15,7 @@ Notes:
 * The more individuals, the better the converge to the true optimum.  
 """
 
+import os
 import numpy as np
 from scipy.optimize import fmin
 from matplotlib import cm
@@ -98,3 +99,5 @@ ani = animation.FuncAnimation(fig2, update_ax, frames=d.shape[0],
 
 plt.show()
 
+path = os.path.abspath(os.curdir)
+os.system("rm -v {}/pikaia_*.txt".format(path))
