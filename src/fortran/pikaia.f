@@ -505,10 +505,6 @@ c     pikaia_ind_all.txt.
       parameter (header_fit=    "# iter best mean worst pmut nnew" ,
      +           header_ind=    "# iter gene(1) .. gene(n)",
      +           header_ind_all="# iter gene(i,1) .. gene(i,n)")
-      write(rowfmt_ind, *)     '(I10, ', n,    '(1X, E23.16))'
-      write(rowfmt_ind_all, *) '(I10, ', np*n, '(1X, E23.16))'
-      write(rowfmt_fit, *)     '(I10, ', 4,    '(1X, E23.16), I10)'
-
 c
 c     Set control variables from input and defaults
       call setctl
@@ -518,6 +514,10 @@ c     Set control variables from input and defaults
          write(*,*) ' Control vector (ctrl) argument(s) invalid'
          return
       endif
+      
+      write(rowfmt_ind, *)     '(I10, ', n,    '(1X, E23.16))'
+      write(rowfmt_ind_all, *) '(I10, ', np*n, '(1X, E23.16))'
+      write(rowfmt_fit, *)     '(I10, ', 4,    '(1X, E23.16), I10)'
  
 c     Header for convergence prints
       if (ivrb.gt.0) then 
