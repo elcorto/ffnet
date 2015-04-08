@@ -13,7 +13,8 @@ Main ffnet class and utility functions
 """
 
 from _version import version
-from scipy import zeros, ones, random, optimize, sqrt, ndarray, array
+from scipy import optimize
+from numpy import ones, empty, array, ndarray, sqrt, random
 import networkx as NX
 from fortran import _ffnet as netprop
 from pikaia import pikaia
@@ -445,7 +446,7 @@ class ffnet:
             self._set_dconec()
 
         #max(graph) below needed if graph lacks some numbers
-        self.units = zeros(max(graph), 'd')
+        self.units = empty(max(graph), 'd')
         # initialize weights
         self.randomweights()
         # set initial normalization parameters
@@ -605,7 +606,7 @@ class ffnet:
 
         """
         nofw = len(self.conec)
-        weights = zeros(nofw, 'd')
+        weights = empty(nofw, 'd')
         for w in xrange(nofw):
             trg = self.conec[w,1]
             n = len(self.graph.predecessors(trg))
@@ -684,7 +685,7 @@ class ffnet:
             if self.renormalize:
                 self.inlimits, self.eni, self.dei = _norms(input, lower=0.15, upper=0.85)
                 self.outlimits, self.eno, self.deo = _norms(target, lower=0.15, upper=0.85)
-                self.ded = zeros((numo,numi), 'd')
+                self.ded = empty((numo,numi), 'd')
                 for o in xrange(numo):
                     for i in xrange(numi):
                         self.ded[o,i] = self.eni[i,0] * self.deo[o,0]
